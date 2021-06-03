@@ -1,0 +1,1 @@
+# smartcamp_core
