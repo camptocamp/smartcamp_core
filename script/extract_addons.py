@@ -183,10 +183,12 @@ ADDONS_TO_EXTRACT = (
     "bi_sql_editor",
     "mass_editing",
     "account_statement_import_camt54",
-    "importaccount_bank_statement_import_transfer_move",
+    "account_bank_statement_import_transfer_move",
     "account_statement_import_camt",
     "web_advanced_search",
     "report_wkhtmltopdf_param",
+    "report_xlsx",
+    "date_range",
     "sql_request_abstract",
 )
 
