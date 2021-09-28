@@ -173,22 +173,23 @@ OCA_PROJECTS = (
 )
 
 ADDONS_TO_EXTRACT = (
+    "account_bank_statement_import_transfer_move",
+    "account_cutoff_accrual_picking",
+    "account_cutoff_base",
+    "account_invoice_start_end_dates",
+    "account_statement_import",
+    "account_statement_import_camt",
+    "account_statement_import_camt54",
+    "bi_sql_editor",
+    "date_range",
+    "mass_editing",
+    "mail_outbound_static",
     "mis_builder",
     "mis_builder_budget",
-    "account_cutoff_base",
-    "account_statement_import",
-    "account_cutoff_accrual_picking",
-    "account_invoice_start_end_dates",
-    "bi_sql_editor",
-    "mass_editing",
-    "account_statement_import_camt54",
-    "account_bank_statement_import_transfer_move",
-    "account_statement_import_camt",
-    "web_advanced_search",
     "report_wkhtmltopdf_param",
     "report_xlsx",
-    "date_range",
     "sql_request_abstract",
+    "web_advanced_search",
 )
 
 parser = argparse.ArgumentParser(
