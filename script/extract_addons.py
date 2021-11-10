@@ -6,7 +6,7 @@ import tempfile
 import shutil
 import argparse
 
-ODOO_SERIE = "14.0"
+ODOO_SERIE = "15.0"
 
 OCA_PROJECTS = (
     "account-analytic",
