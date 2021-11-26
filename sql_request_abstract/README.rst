@@ -96,6 +96,7 @@ Contributors
 * Florian da Costa <florian.dacosta@akretion.com>
 * Sylvain LE GAL (https://twitter.com/legalsylvain)
 * Alfadil Tabar (alfadil.tabar@gmail.com)
+* Helly kapatel <helly.kapatel@initos.com>
 
 Maintainers
 ~~~~~~~~~~~
@@ -109,6 +110,14 @@ This module is maintained by the OCA.
 OCA, or the Odoo Community Association, is a nonprofit organization whose
 mission is to support the collaborative development of Odoo features and
 promote its widespread use.
+
+.. |maintainer-legalsylvain| image:: https://github.com/legalsylvain.png?size=40px
+    :target: https://github.com/legalsylvain
+    :alt: legalsylvain
+
+Current `maintainer <https://odoo-community.org/page/maintainer-role>`__:
+
+|maintainer-legalsylvain| 
 
 This module is part of the `OCA/server-tools <https://github.com/OCA/server-tools/tree/14.0/sql_request_abstract>`_ project on GitHub.
 
