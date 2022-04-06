@@ -13,7 +13,7 @@ OCA_PROJECTS = (
     # "account-budgeting",
     "account-closing",
     # "account-consolidation",
-    # "account-financial-reporting",
+    "account-financial-reporting",
     # "account-financial-tools",
     # "account-fiscal-rule",
     # "account-invoice-reporting",
@@ -184,6 +184,8 @@ ADDONS_TO_EXTRACT = (
     "account_statement_import",
     "account_statement_import_camt",
     "account_statement_import_camt54",
+    #### account-financial-reporting
+    "account_financial_report",
     #### server-ux
     "date_range",
     "mass_editing",
