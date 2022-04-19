@@ -204,7 +204,7 @@ ADDONS_TO_EXTRACT = (
 )
 
 parser = argparse.ArgumentParser(
-    description="Fetch OCA addons to put in smartcampt"
+    description="Fetch OCA addons to put in smartcamp"
 )
 parser.add_argument(
     "destination_path", type=Path, help="Folder to gather the addons"
@@ -233,7 +233,7 @@ with tempfile.TemporaryDirectory() as fp:
 
 if addons_control:
     print(
-        "the following addons where not found: {}".format(
+        "The following addons were not found: {}".format(
             ", ".join(addons_control)
         )
     )
