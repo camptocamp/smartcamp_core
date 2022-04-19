@@ -217,7 +217,7 @@ addons_control = list(ADDONS_TO_EXTRACT)
 with tempfile.TemporaryDirectory() as fp:
     for project in OCA_PROJECTS:
         project_path = Path(fp, project)
-        command = "git clone --depth=1 --branch={} ssh://git@github.com/oca/{}.git {}".format(
+        command = "git clone --depth=1 --branch={} --single-branch ssh://git@github.com/oca/{}.git {}".format(
             ODOO_SERIE, project, project_path
         )
         os.system(command)
