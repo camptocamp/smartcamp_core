@@ -32,6 +32,15 @@ ADDONS_TO_EXTRACT = {
         "report_wkhtmltopdf_param",
         "report_xlsx",
     ),
+    "connector": (
+        "connector",
+        "component",
+        "component_event",
+    ),
+    "connector-interfaces": (
+        "connector_importer",
+        "connector_importer_product",
+    ),
     "server-ux": (
         "date_range",
         "mass_editing",
@@ -42,6 +51,10 @@ ADDONS_TO_EXTRACT = {
     "mis-builder": (
         "mis_builder",
         "mis_builder_budget",
+    ),
+    "queue": (
+        "queue_job",
+        "queue_job_cron_jobrunner",
     ),
     "server-tools": (
         "sql_request_abstract",
