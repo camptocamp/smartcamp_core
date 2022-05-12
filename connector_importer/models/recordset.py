@@ -12,6 +12,7 @@ from odoo.addons.base_sparse_field.models.fields import Serialized
 from odoo.addons.queue_job.job import DONE, STATES
 
 from ..log import logger
+from ..utils.misc import get_importer_for_config
 
 
 class ImportRecordset(models.Model):
@@ -82,11 +83,9 @@ class ImportRecordset(models.Model):
     docs_html = fields.Html(string="Docs", compute="_compute_docs_html")
     notes = fields.Html(help="Useful info for your users")
 
-    @api.depends("backend_id.name")
     def _compute_name(self):
         for item in self:
-            names = [item.backend_id.name.strip(), "#" + str(item.id)]
-            item.name = " ".join(names)
+            item.name = f"#{item.id}"
 
     def get_records(self):
         """Retrieve importable records and keep ordering."""
@@ -226,7 +225,7 @@ class ImportRecordset(models.Model):
         """queue a job for creating records (import.record items)"""
         job_method = self.with_delay().import_recordset
         if self.debug_mode():
-            logger.warn("### DEBUG MODE ACTIVE: WILL NOT USE QUEUE ###")
+            logger.warning("### DEBUG MODE ACTIVE: WILL NOT USE QUEUE ###")
             job_method = self.import_recordset
 
         for item in self:
@@ -271,12 +270,11 @@ class ImportRecordset(models.Model):
 
     def _get_importers(self):
         importers = OrderedDict()
-        for config in self.available_importers():
-            model = self.env["ir.model"]._get(config.model)
-            with self.backend_id.work_on(self._name) as work:
-                importers[model] = work.component_by_name(
-                    config.importer, model_name=config.model
-                )
+        for importer_config in self.available_importers():
+            model_record = self.env["ir.model"]._get(importer_config.model)
+            importers[model_record] = get_importer_for_config(
+                self.backend_id, self._name, importer_config
+            )
         return importers
 
     @api.depends("import_type_id")
@@ -284,7 +282,10 @@ class ImportRecordset(models.Model):
         template = self.env.ref("connector_importer.recordset_docs")
         for item in self:
             item.docs_html = False
-            if isinstance(item.id, models.NewId):
+            if isinstance(item.id, models.NewId) or not item.backend_id:
+                # Surprise surprise: when editing a new recordset
+                # if you hit `configure source` btn
+                # the record will be saved but the backend can be null :S
                 continue
             importers = item._get_importers()
             data = {"recordset": item, "importers": importers}

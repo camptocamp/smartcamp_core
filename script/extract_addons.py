@@ -37,7 +37,10 @@ ADDONS_TO_EXTRACT = {
         "component",
         "component_event",
     ),
-    "connector-interfaces": (
+    # repo name, org, branch
+    # TODO @simahawk: this work has been done in urgency and must be cleaned up 
+    # and proper PRs opened once validated on odoo.sh.
+    ("connector-interfaces", "camptocamp", "15-mig-connector_importer_product"): (
         "connector_importer",
         "connector_importer_product",
     ),
@@ -83,12 +86,22 @@ def fetch_addons(odoo_serie, addons_to_extract, destination_path):
     addons_control = []
     for addons_group in addons_to_extract.values():
         addons_control.extend(list(addons_group))
+    cmd_pattern = (
+        "git clone --depth=1 --branch={branch} --single-branch "
+        "ssh://git@github.com/{org}/{repo}.git {path}"
+    )
     with tempfile.TemporaryDirectory() as fp:
         for repo, addons in addons_to_extract.items():
+            org = "OCA"
+            repo = repo
+            branch = odoo_serie
+            if isinstance(repo, tuple):
+                repo, org, branch = repo
             repo_path = Path(fp, repo)
-            command = "git clone --depth=1 --branch={} --single-branch ssh://git@github.com/oca/{}.git {}".format(
-                odoo_serie, repo, repo_path
+            command = cmd_pattern.format(
+                org=org, branch=branch, repo=repo, path=repo_path
             )
+            print("Running ", command)
             os.system(command)
             for addon in addons:
                 addon_path = repo_path / addon
@@ -113,10 +126,16 @@ def main(serie, addons_to_extract):
         raise ValueError("The destination path must be an existing directory")
 
     repo_whitelist = [x.strip() for x in (arguments.repo_whitelist or "").split(",") if x.strip()]
+    _addons_to_extract = {}
     if repo_whitelist:
-        addons_to_extract = {k: v for k,v in addons_to_extract.items() if k in repo_whitelist}
+        for repo_def, addons in addons_to_extract.items():
+            repo_name = repo_def
+            if isinstance(repo_name, tuple):
+                repo_name = repo_name[0]
+            if repo_name in repo_whitelist:
+                _addons_to_extract[repo_def] = addons
         print("Updating only repo(s): ", repo_whitelist)
-    fetch_addons(serie, addons_to_extract, destination_path)
+    fetch_addons(serie, _addons_to_extract, destination_path)
 
 
 if __name__ == "__main__":  # pragma: no cover
