@@ -9,6 +9,7 @@ import os
 from odoo import api, fields, models
 
 from ..log import logger
+from ..utils.misc import get_importer_for_config
 
 
 class ImportRecord(models.Model):
@@ -79,16 +80,10 @@ class ImportRecord(models.Model):
         :param model_name: name of the model to import
         :param is_last_importer: flag for last importer of the recordset
         """
-        kwargs = {
-            "options": importer_config.options,
-        }
-        with self.backend_id.with_context(**importer_config.context).work_on(
-            self._name, **kwargs
-        ) as work:
-            importer = work.component_by_name(
-                importer_config.importer, model_name=importer_config.model
-            )
-            return importer.run(self, is_last_importer=importer_config.is_last_importer)
+        importer = get_importer_for_config(self.backend_id, self._name, importer_config)
+        return importer.run(
+            self, is_last_importer=importer_config.get("is_last_importer")
+        )
 
     def run_import(self):
         """Queue a job for importing data stored in to self"""

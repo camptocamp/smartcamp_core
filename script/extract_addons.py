@@ -37,7 +37,10 @@ ADDONS_TO_EXTRACT = {
         "component",
         "component_event",
     ),
-    "connector-interfaces": (
+    # repo name, org, branch
+    # TODO @simahawk: this work has been done in urgency and must be cleaned up 
+    # and proper PRs opened once validated on odoo.sh.
+    ("connector-interfaces", "camptocamp", "15-mig-connector_importer_product"): (
         "connector_importer",
         "connector_importer_product",
     ),
