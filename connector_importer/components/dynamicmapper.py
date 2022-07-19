@@ -36,8 +36,8 @@ class DynamicMapper(Component):
             if available_fields.get(fname):
                 fspec = available_fields.get(fname)
                 ftype = fspec["type"]
-                if self._is_xmlid_key(fname, ftype):
-                    fname = fname.replace("xid:", "")
+                if self._is_xmlid_key(fname, ftype, record):
+                    record[fname] = record[fname].replace("xid:", "")
                     ftype = "_xmlid"
                 converter = self._get_converter(fname, ftype)
                 if converter:
@@ -61,12 +61,10 @@ class DynamicMapper(Component):
     def _source_key_prefix(self):
         return self.work.options.mapper.get("source_key_prefix", "")
 
-    def _is_xmlid_key(self, fname, ftype):
-        return fname.startswith("xid:") and ftype in (
-            "many2one",
-            "one2many",
-            "many2many",
-        )
+    def _is_xmlid_key(self, fname, ftype, record):
+        return ftype in ("many2one", "one2many", "many2many",) and record.get(
+            fname, ""
+        ).startswith("xid:")
 
     def _dynamic_keys_mapping(self, fname):
         return {

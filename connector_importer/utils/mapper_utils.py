@@ -154,23 +154,23 @@ def xmlid_to_rel(field):
     xmlid_to_rel._from_key = field
 
     def modifier(self, record, to_attr):
+        column = self.model._fields[to_attr]
         value = record.get(field)
         if value is None:
             return None
-        if isinstance(value, str) and "," in value:
+        if column.type.endswith("2many"):
             value = [x.strip() for x in value.split(",") if x.strip()]
-        if isinstance(value, str):
+            return [
+                (6, 0, self.env.ref(x).ids)
+                for x in value
+                if self.env.ref(x, raise_if_not_found=False)
+            ]
+        else:
             # m2o
             rec = self.env.ref(value, raise_if_not_found=False)
             if rec:
                 return rec.id
             return None
-        # x2m
-        return [
-            (6, 0, self.env.ref(x).ids)
-            for x in value
-            if self.env.ref(x, raise_if_not_found=False)
-        ]
 
     return modifier
 
