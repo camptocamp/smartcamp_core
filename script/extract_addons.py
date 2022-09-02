@@ -44,9 +44,15 @@ ADDONS_TO_EXTRACT = {
         "connector_importer",
         "connector_importer_product",
     ),
+    "purchase-workflow": (
+        "purchase_tier_validation",
+        "purchase_requisition_tier_validation",
+    ),
     "server-ux": (
         "date_range",
         "mass_editing",
+        "base_tier_validation",
+        "base_tier_validation_formula",
     ),
     "social": (
         "mail_outbound_static",
