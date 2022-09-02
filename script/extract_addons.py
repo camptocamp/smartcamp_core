@@ -108,8 +108,8 @@ def main(serie, addons_to_extract):
         raise ValueError("The destination path must be an existing directory")
 
     repo_whitelist = [x.strip() for x in (arguments.repo_whitelist or "").split(",") if x.strip()]
-    _addons_to_extract = {}
     if repo_whitelist:
+        _addons_to_extract = {}
         for repo_def, addons in addons_to_extract.items():
             repo_name = repo_def
             if isinstance(repo_name, tuple):
@@ -117,6 +117,8 @@ def main(serie, addons_to_extract):
             if repo_name in repo_whitelist:
                 _addons_to_extract[repo_def] = addons
         print("Updating only repo(s): ", repo_whitelist)
+    else:
+        _addons_to_extract = addons_to_extract
     fetch_addons(serie, _addons_to_extract, destination_path)
 
 
