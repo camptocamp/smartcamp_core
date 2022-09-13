@@ -97,6 +97,30 @@ be found on GitHub.
 Changelog
 =========
 
+15.0.4.0.5 (2022-07-19)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Bugfixes**
+
+- Support users without timezone. (`#388 <https://github.com/OCA/mis-builder/issues/388>`_)
+
+
+15.0.4.0.4 (2022-07-19)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Bugfixes**
+
+- Allow deleting a report that has subreports. (`#431 <https://github.com/OCA/mis-builder/issues/431>`_)
+
+
+15.0.4.0.2 (2022-02-16)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Bugfixes**
+
+- Fix access right issue when clicking the "Save" button on a MIS Report Instance form. (`#410 <https://github.com/OCA/mis-builder/issues/410>`_)
+
+
 14.0.4.0.0 (2022-01-08)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
