@@ -31,6 +31,7 @@ ADDONS_TO_EXTRACT = {
         "bi_sql_editor",
         "report_wkhtmltopdf_param",
         "report_xlsx",
+        "sql_request_abstract",
     ),
     "connector": (
         "connector",
@@ -61,12 +62,12 @@ ADDONS_TO_EXTRACT = {
         "mis_builder",
         "mis_builder_budget",
     ),
+    ("mis-builder-contrib", "yankinmax", "add-mis_builder_total_committed_purchase"): (
+        "mis_builder_total_committed_purchase",
+    ),
     "queue": (
         "queue_job",
         "queue_job_cron_jobrunner",
-    ),
-    "server-tools": (
-        "sql_request_abstract",
     ),
     "web": (
         "web_advanced_search",

@@ -144,7 +144,7 @@ class MisReportKpi(models.Model):
     def name_get(self):
         res = []
         for rec in self:
-            name = u"{} ({})".format(rec.description, rec.name)
+            name = "{} ({})".format(rec.description, rec.name)
             res.append((rec.id, name))
         return res
 
@@ -171,7 +171,7 @@ class MisReportKpi(models.Model):
             for expression in kpi.expression_ids:
                 if expression.subkpi_id:
                     exprs.append(
-                        u"{}\xa0=\xa0{}".format(
+                        "{}\xa0=\xa0{}".format(
                             expression.subkpi_id.name, expression.name
                         )
                     )
@@ -308,7 +308,7 @@ class MisReportKpiExpression(models.Model):
             kpi = rec.kpi_id
             subkpi = rec.subkpi_id
             if subkpi:
-                name = u"{} / {} ({}.{})".format(
+                name = "{} / {} ({}.{})".format(
                     kpi.description, subkpi.description, kpi.name, subkpi.name
                 )
             else:
@@ -500,13 +500,13 @@ class MisReport(models.Model):
                     (0, None, {"name": False, "subkpi_id": subkpi.id})
                 )  # add empty expressions for new subkpis
             if expressions:
-                kpi.expressions_ids = expressions
+                kpi.expression_ids = expressions
 
     def get_wizard_report_action(self):
-        action = self.env.ref("mis_builder.mis_report_instance_view_action")
-        res = action.read()[0]
+        xmlid = "mis_builder.mis_report_instance_view_action"
+        action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
         view = self.env.ref("mis_builder.wizard_mis_report_instance_view_form")
-        res.update(
+        action.update(
             {
                 "view_id": view.id,
                 "views": [(view.id, "form")],
@@ -518,7 +518,7 @@ class MisReport(models.Model):
                 },
             }
         )
-        return res
+        return action
 
     def copy(self, default=None):
         self.ensure_one()
@@ -596,10 +596,9 @@ class MisReport(models.Model):
                     ]
                 )
             else:
-                datetime_from = _utc_midnight(date_from, self._context.get("tz", "UTC"))
-                datetime_to = _utc_midnight(
-                    date_to, self._context.get("tz", "UTC"), add_day=1
-                )
+                tz = str(self.env["ir.fields.converter"]._input_tz())
+                datetime_from = _utc_midnight(date_from, tz)
+                datetime_to = _utc_midnight(date_to, tz, add_day=1)
                 domain.extend(
                     [
                         (query.date_field.name, ">=", datetime_from),

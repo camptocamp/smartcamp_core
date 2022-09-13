@@ -14,7 +14,6 @@ external records into Odoo records and conversely.
 import logging
 from collections import namedtuple
 from contextlib import contextmanager
-from typing import Callable
 
 from odoo import models
 
@@ -127,7 +126,7 @@ def none(field):
     """
 
     def modifier(self, record, to_attr):
-        if isinstance(field, Callable):
+        if callable(field):
             result = field(self, record, to_attr)
         else:
             result = record[field]
@@ -176,7 +175,7 @@ def m2o_to_external(field, binding=None):
                   (m2o_to_external('magento_country_id'), 'country')]
 
     :param field: name of the source field in the record
-    :param binding: name of the binding model is the relation is not a binding
+    :param binding: name of the binding model if the relation is not a binding
     """
 
     def modifier(self, record, to_attr):
@@ -225,7 +224,7 @@ def external_to_m2o(field, binding=None):
                   (external_to_m2o('country'), 'magento_country_id')]
 
     :param field: name of the source field in the record
-    :param binding: name of the binding model is the relation is not a binding
+    :param binding: name of the binding model if the relation is not a binding
     """
 
     def modifier(self, record, to_attr):
@@ -555,7 +554,7 @@ class Mapper(AbstractComponent):
         >>> mapper = self.component(usage='mapper')
         >>> map_record = mapper.map_record(record)
         >>> values = map_record.values()
-        >>> values = map_record.values(only_create=True)
+        >>> values = map_record.values(for_create=True)
         >>> values = map_record.values(fields=['name', 'street'])
 
     """
@@ -606,7 +605,7 @@ class Mapper(AbstractComponent):
         for base in reversed(cls.__bases__):
             if hasattr(base, "_map_methods"):
                 # this is already a dynamically generated Component, so we can
-                # use it's existing mappings
+                # use its existing mappings
                 base_map_methods = base._map_methods or {}
                 for attr_name, definition in base_map_methods.items():
                     if attr_name in map_methods:
@@ -746,7 +745,7 @@ class Mapper(AbstractComponent):
 
         """
         fieldname = direct_entry
-        if isinstance(direct_entry, Callable):
+        if callable(direct_entry):
             # Map the closure entries with variable names
             cells = dict(
                 list(
@@ -757,7 +756,7 @@ class Mapper(AbstractComponent):
                 )
             )
             assert "field" in cells, "Modifier without 'field' argument."
-            if isinstance(cells["field"], Callable):
+            if callable(cells["field"]):
                 fieldname = self._direct_source_field_name(cells["field"])
             else:
                 fieldname = cells["field"]
@@ -804,7 +803,7 @@ class Mapper(AbstractComponent):
         for_create = self.options.for_create
         result = {}
         for from_attr, to_attr in self.direct:
-            if isinstance(from_attr, Callable):
+            if callable(from_attr):
                 attr_name = self._direct_source_field_name(from_attr)
             else:
                 attr_name = from_attr
@@ -878,7 +877,7 @@ class ImportMapper(AbstractComponent):
         :param to_attr: name of the target attribute
         :type to_attr: str
         """
-        if isinstance(from_attr, Callable):
+        if callable(from_attr):
             return from_attr(self, record, to_attr)
 
         value = record.get(from_attr)
@@ -919,7 +918,7 @@ class ExportMapper(AbstractComponent):
         :param to_attr: name of the target attribute
         :type to_attr: str
         """
-        if isinstance(from_attr, Callable):
+        if callable(from_attr):
             return from_attr(self, record, to_attr)
 
         value = record[from_attr]
@@ -937,7 +936,7 @@ class ExportMapper(AbstractComponent):
         return value
 
 
-class MapRecord(object):
+class MapRecord:
     """A record prepared to be converted using a :py:class:`Mapper`.
 
     MapRecord instances are prepared by :py:meth:`Mapper.map_record`.
