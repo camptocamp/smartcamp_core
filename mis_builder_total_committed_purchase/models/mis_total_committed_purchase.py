@@ -42,15 +42,15 @@ class MisTotalCommittedPurchase(models.Model):
             tools.drop_view_if_exists(self.env.cr, "mis_total_committed_purchase")
             self.env.cr.execute(f.read())
 
-            with open(
-                get_module_resource(
-                    "mis_builder_total_committed_purchase",
-                    "data",
-                    "mis_total_committed_purchase_tag_rel.sql",
-                )
-            ) as f2:
-                # Create many2many relation for account.analytic.tag
-                tools.drop_view_if_exists(
-                    self.env.cr, "mis_total_committed_purchase_tag_rel"
-                )
-                self.env.cr.execute(f2.read())
+        with open(
+            get_module_resource(
+                "mis_builder_total_committed_purchase",
+                "data",
+                "mis_total_committed_purchase_tag_rel.sql",
+            )
+        ) as f2:
+            # Create many2many relation for account.analytic.tag
+            tools.drop_view_if_exists(
+                self.env.cr, "mis_total_committed_purchase_tag_rel"
+            )
+            self.env.cr.execute(f2.read())
