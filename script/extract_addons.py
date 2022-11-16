@@ -16,6 +16,8 @@ ADDONS_TO_EXTRACT = {
         "account_cutoff_accrual_picking",
         "account_cutoff_base",
         "account_invoice_start_end_dates",
+        "account_cutoff_start_end_dates",
+        "account_invoice_start_end_dates",
     ),
     "account-financial-reporting": (
         "account_financial_report",
