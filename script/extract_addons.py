@@ -50,6 +50,7 @@ ADDONS_TO_EXTRACT = {
     "purchase-workflow": (
         "purchase_tier_validation",
         "purchase_requisition_tier_validation",
+        "purchase_advance_payment",
     ),
     "server-ux": (
         "date_range",
