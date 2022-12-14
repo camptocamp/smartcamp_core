@@ -72,3 +72,13 @@ msgstr ""
 #: model:ir.model.fields,field_description:mis_builder_total_committed_purchase.field_mis_total_committed_purchase__name
 msgid "Name"
 msgstr ""
+
+#. module: mis_builder_total_committed_purchase
+#: model:ir.model.fields,field_description:mis_builder_total_committed_purchase.field_mis_total_committed_purchase__product_id
+msgid "Product"
+msgstr ""
+
+#. module: mis_builder_total_committed_purchase
+#: model:ir.model.fields,field_description:mis_builder_total_committed_purchase.field_mis_total_committed_purchase__purchase_order_id
+msgid "Purchase Order"
+msgstr ""

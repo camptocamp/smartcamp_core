@@ -66,6 +66,7 @@ ADDONS_TO_EXTRACT = {
         "mis_builder_budget",
     ),
     ("mis-builder-contrib"): (
+        "mis_builder_budget_product",
         "mis_builder_total_committed_purchase",
     ),
     "queue": (
