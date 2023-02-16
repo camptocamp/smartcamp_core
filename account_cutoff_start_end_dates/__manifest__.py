@@ -5,7 +5,7 @@
 
 {
     "name": "Account Cut-off Start End Dates",
-    "version": "15.0.1.0.0",
+    "version": "16.0.1.0.0",
     "category": "Accounting & Finance",
     "license": "AGPL-3",
     "summary": "Cutoffs based on start/end dates",
@@ -13,7 +13,10 @@
     "maintainers": ["alexis-via"],
     "website": "https://github.com/OCA/account-closing",
     "depends": ["account_cutoff_base", "account_invoice_start_end_dates"],
-    "data": ["views/account_cutoff.xml"],
+    "data": [
+        "views/account_cutoff.xml",
+        "views/account_cutoff_line.xml",
+    ],
     "images": [
         "images/prepaid_revenue_draft.jpg",
         "images/prepaid_revenue_journal_entry.jpg",
