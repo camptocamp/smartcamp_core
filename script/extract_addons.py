@@ -64,6 +64,9 @@ ADDONS_TO_EXTRACT = {
     "social": (
         "mail_outbound_static",
     ),
+    "stock-logistics-workflow": (
+        "stock_picking_invoice_link",
+    ),
     "mis-builder": (
         "mis_builder",
         "mis_builder_budget",
