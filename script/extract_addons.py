@@ -6,7 +6,7 @@ import tempfile
 import shutil
 import argparse
 
-ODOO_SERIE = "15.0"
+ODOO_SERIE = "16.0"
 ADDONS_TO_EXTRACT = {
     # repo: (addon1, addon2, ...)
     "bank-statement-import": (
