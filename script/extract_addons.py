@@ -22,6 +22,9 @@ ADDONS_TO_EXTRACT = {
     "account-financial-reporting": (
         "account_financial_report",
     ),
+    "account-invoice-reporting": (
+        "account_invoice_report_grouped_by_picking",
+    ),
     "bank-statement-import": (
         "account_statement_import",
         "account_statement_import_camt",
