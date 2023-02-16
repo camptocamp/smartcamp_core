@@ -60,19 +60,12 @@ class TrialBalanceXslx(models.AbstractModel):
             if report.foreign_currency:
                 foreign_currency = {
                     7: {
-                        "header": _("Cur."),
-                        "field": "currency_id",
-                        "field_currency_balance": "currency_id",
-                        "type": "many2one",
-                        "width": 7,
-                    },
-                    8: {
                         "header": _("Initial balance"),
                         "field": "initial_currency_balance",
                         "type": "amount_currency",
                         "width": 14,
                     },
-                    9: {
+                    8: {
                         "header": _("Ending balance"),
                         "field": "ending_currency_balance",
                         "type": "amount_currency",
@@ -118,19 +111,12 @@ class TrialBalanceXslx(models.AbstractModel):
             if report.foreign_currency:
                 foreign_currency = {
                     6: {
-                        "header": _("Cur."),
-                        "field": "currency_id",
-                        "field_currency_balance": "currency_id",
-                        "type": "many2one",
-                        "width": 7,
-                    },
-                    7: {
                         "header": _("Initial balance"),
                         "field": "initial_currency_balance",
                         "type": "amount_currency",
                         "width": 14,
                     },
-                    8: {
+                    7: {
                         "header": _("Ending balance"),
                         "field": "ending_currency_balance",
                         "type": "amount_currency",
@@ -183,11 +169,12 @@ class TrialBalanceXslx(models.AbstractModel):
         total_amount = res_data["total_amount"]
         partners_data = res_data["partners_data"]
         accounts_data = res_data["accounts_data"]
-        hierarchy_on = res_data["hierarchy_on"]
+        show_hierarchy = res_data["show_hierarchy"]
         show_partner_details = res_data["show_partner_details"]
         show_hierarchy_level = res_data["show_hierarchy_level"]
         foreign_currency = res_data["foreign_currency"]
         limit_hierarchy_level = res_data["limit_hierarchy_level"]
+        hide_parent_hierarchy_level = res_data["hide_parent_hierarchy_level"]
         if not show_partner_details:
             # Display array header for account lines
             self.write_array_header(report_data)
@@ -195,21 +182,13 @@ class TrialBalanceXslx(models.AbstractModel):
         # For each account
         if not show_partner_details:
             for balance in trial_balance:
-                if hierarchy_on == "relation":
-                    if limit_hierarchy_level:
-                        if show_hierarchy_level > balance["level"]:
-                            # Display account lines
-                            self.write_line_from_dict(balance, report_data)
-                    else:
+                if show_hierarchy and limit_hierarchy_level:
+                    if show_hierarchy_level > balance["level"] and (
+                        not hide_parent_hierarchy_level
+                        or (show_hierarchy_level - 1) == balance["level"]
+                    ):
+                        # Display account lines
                         self.write_line_from_dict(balance, report_data)
-                elif hierarchy_on == "computed":
-                    if balance["type"] == "account_type":
-                        if limit_hierarchy_level:
-                            if show_hierarchy_level > balance["level"]:
-                                # Display account lines
-                                self.write_line_from_dict(balance, report_data)
-                        else:
-                            self.write_line_from_dict(balance, report_data)
                 else:
                     self.write_line_from_dict(balance, report_data)
         else:
