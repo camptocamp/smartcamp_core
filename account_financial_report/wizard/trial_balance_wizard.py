@@ -26,19 +26,9 @@ class TrialBalanceReportWizard(models.TransientModel):
         required=True,
         default="posted",
     )
-    hierarchy_on = fields.Selection(
-        [
-            ("computed", "Computed Accounts"),
-            ("relation", "Child Accounts"),
-            ("none", "No hierarchy"),
-        ],
-        required=True,
-        default="none",
-        help="""Computed Accounts: Use when the account group have codes
-        that represent prefixes of the actual accounts.\n
-        Child Accounts: Use when your account groups are hierarchical.\n
-        No hierarchy: Use to display just the accounts, without any grouping.
-        """,
+    show_hierarchy = fields.Boolean(
+        string="Show hierarchy",
+        help="Use when your account groups are hierarchical",
     )
     limit_hierarchy_level = fields.Boolean("Limit hierarchy levels")
     show_hierarchy_level = fields.Integer("Hierarchy Levels to display", default=1)
@@ -96,12 +86,12 @@ class TrialBalanceReportWizard(models.TransientModel):
                     lambda a: a.company_id == self.company_id
                 )
 
-    @api.constrains("hierarchy_on", "show_hierarchy_level")
+    @api.constrains("show_hierarchy", "show_hierarchy_level")
     def _check_show_hierarchy_level(self):
         for rec in self:
-            if rec.hierarchy_on != "none" and rec.show_hierarchy_level <= 0:
+            if rec.show_hierarchy and rec.show_hierarchy_level <= 0:
                 raise UserError(
-                    _("The hierarchy level to filter on must be " "greater than 0.")
+                    _("The hierarchy level to filter on must be greater than 0.")
                 )
 
     @api.depends("date_from")
@@ -120,10 +110,9 @@ class TrialBalanceReportWizard(models.TransientModel):
     @api.onchange("company_id")
     def onchange_company_id(self):
         """Handle company change."""
-        account_type = self.env.ref("account.data_unaffected_earnings")
         count = self.env["account.account"].search_count(
             [
-                ("user_type_id", "=", account_type.id),
+                ("account_type", "=", "equity_unaffected"),
                 ("company_id", "=", self.company_id.id),
             ]
         )
@@ -197,11 +186,13 @@ class TrialBalanceReportWizard(models.TransientModel):
         if self.receivable_accounts_only or self.payable_accounts_only:
             domain = [("company_id", "=", self.company_id.id)]
             if self.receivable_accounts_only and self.payable_accounts_only:
-                domain += [("internal_type", "in", ("receivable", "payable"))]
+                domain += [
+                    ("account_type", "in", ("asset_receivable", "liability_payable"))
+                ]
             elif self.receivable_accounts_only:
-                domain += [("internal_type", "=", "receivable")]
+                domain += [("account_type", "=", "asset_receivable")]
             elif self.payable_accounts_only:
-                domain += [("internal_type", "=", "payable")]
+                domain += [("account_type", "=", "liability_payable")]
             self.account_ids = self.env["account.account"].search(domain)
         else:
             self.account_ids = None
@@ -216,11 +207,10 @@ class TrialBalanceReportWizard(models.TransientModel):
 
     @api.depends("company_id")
     def _compute_unaffected_earnings_account(self):
-        account_type = self.env.ref("account.data_unaffected_earnings")
         for record in self:
             record.unaffected_earnings_account = self.env["account.account"].search(
                 [
-                    ("user_type_id", "=", account_type.id),
+                    ("account_type", "=", "equity_unaffected"),
                     ("company_id", "=", record.company_id.id),
                 ]
             )
@@ -261,7 +251,7 @@ class TrialBalanceReportWizard(models.TransientModel):
             "partner_ids": self.partner_ids.ids or [],
             "journal_ids": self.journal_ids.ids or [],
             "fy_start_date": self.fy_start_date,
-            "hierarchy_on": self.hierarchy_on,
+            "show_hierarchy": self.show_hierarchy,
             "limit_hierarchy_level": self.limit_hierarchy_level,
             "show_hierarchy_level": self.show_hierarchy_level,
             "hide_parent_hierarchy_level": self.hide_parent_hierarchy_level,

@@ -81,10 +81,16 @@ class JournalLedgerReport(models.AbstractModel):
         return moves.ids, Moves, move_data
 
     def _get_move_lines_domain(self, move_ids, wizard, journal_ids):
-        return [("display_type", "=", False), ("move_id", "in", move_ids)]
+        return [
+            ("display_type", "not in", ["line_note", "line_section"]),
+            ("move_id", "in", move_ids),
+        ]
 
     def _get_move_lines_order(self, move_ids, wizard, journal_ids):
-        return ""
+        """Add `move_id` to make sure the order of the records is correct
+        (especially if we use auto-sequence).
+        """
+        return "move_id"
 
     def _get_move_lines_data(self, ml, wizard, ml_taxes, auto_sequence, exigible):
         base_debit = (
@@ -131,7 +137,7 @@ class JournalLedgerReport(models.AbstractModel):
         return {
             "name": account.name,
             "code": account.code,
-            "internal_type": account.internal_type,
+            "account_type": account.account_type,
         }
 
     def _get_partner_data(self, partners):
