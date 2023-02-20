@@ -6,7 +6,7 @@ import tempfile
 import shutil
 import argparse
 
-ODOO_SERIE = "16.0"
+ODOO_SERIE = "15.0"
 ADDONS_TO_EXTRACT = {
     # repo: (addon1, addon2, ...)
     "bank-statement-import": (
@@ -21,9 +21,6 @@ ADDONS_TO_EXTRACT = {
     ),
     "account-financial-reporting": (
         "account_financial_report",
-    ),
-    "account-invoice-reporting": (
-        "account_invoice_report_grouped_by_picking",
     ),
     "bank-statement-import": (
         "account_statement_import",
@@ -63,9 +60,6 @@ ADDONS_TO_EXTRACT = {
     ),
     "social": (
         "mail_outbound_static",
-    ),
-    "stock-logistics-workflow": (
-        "stock_picking_invoice_link",
     ),
     "mis-builder": (
         "mis_builder",
