@@ -2,6 +2,7 @@
 # @author: Alexis de Lattre <alexis.delattre@akretion.com>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
+import json
 from collections import defaultdict
 
 from dateutil.relativedelta import relativedelta
@@ -9,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import date_utils, float_is_zero
+from odoo.tools.misc import format_date
 
 
 class AccountCutoff(models.Model):
@@ -40,10 +42,10 @@ class AccountCutoff(models.Model):
         }
 
     @api.model
-    def _default_move_label(self):
+    def _default_move_ref(self):
         cutoff_type = self.env.context.get("default_cutoff_type")
-        label = self.cutoff_type_label_map.get(cutoff_type, "")
-        return label
+        ref = self.cutoff_type_label_map.get(cutoff_type, "")
+        return ref
 
     @api.model
     def _default_cutoff_date(self):
@@ -81,8 +83,7 @@ class AccountCutoff(models.Model):
 
     cutoff_date = fields.Date(
         string="Cut-off Date",
-        readonly=True,
-        states={"draft": [("readonly", False)]},
+        states={"done": [("readonly", True)]},
         copy=False,
         tracking=True,
         default=lambda self: self._default_cutoff_date(),
@@ -91,8 +92,15 @@ class AccountCutoff(models.Model):
         selection="_selection_cutoff_type",
         string="Type",
         required=True,
-        readonly=True,
-        states={"draft": [("readonly", False)]},
+        states={"done": [("readonly", True)]},
+    )
+    source_move_state = fields.Selection(
+        [("posted", "Posted Entries"), ("draft_posted", "Draft and Posted Entries")],
+        string="Source Entries",
+        required=True,
+        default="posted",
+        states={"done": [("readonly", True)]},
+        tracking=True,
     )
     move_id = fields.Many2one(
         "account.move",
@@ -101,25 +109,22 @@ class AccountCutoff(models.Model):
         copy=False,
         check_company=True,
     )
-    move_label = fields.Char(
-        string="Label of the Cut-off Journal Entry",
-        readonly=True,
-        states={"draft": [("readonly", False)]},
-        default=lambda self: self._default_move_label(),
-        help="This label will be written in the 'Name' field of the "
-        "Cut-off Account Move Lines and in the 'Reference' field of "
-        "the Cut-off Account Move.",
+    move_ref = fields.Char(
+        string="Reference of the Cut-off Journal Entry",
+        states={"done": [("readonly", True)]},
+        default=lambda self: self._default_move_ref(),
     )
     move_partner = fields.Boolean(
         string="Partner on Move Line",
         default=lambda self: self.env.company.default_cutoff_move_partner,
+        states={"done": [("readonly", True)]},
+        tracking=True,
     )
     cutoff_account_id = fields.Many2one(
         comodel_name="account.account",
         string="Cut-off Account",
         domain="[('deprecated', '=', False), ('company_id', '=', company_id)]",
-        readonly=True,
-        states={"draft": [("readonly", False)]},
+        states={"done": [("readonly", True)]},
         default=lambda self: self._default_cutoff_account_id(),
         check_company=True,
         tracking=True,
@@ -128,8 +133,7 @@ class AccountCutoff(models.Model):
         comodel_name="account.journal",
         string="Cut-off Account Journal",
         default=lambda self: self.env.company.default_cutoff_journal_id,
-        readonly=True,
-        states={"draft": [("readonly", False)]},
+        states={"done": [("readonly", True)]},
         domain="[('company_id', '=', company_id)]",
         check_company=True,
         tracking=True,
@@ -138,15 +142,13 @@ class AccountCutoff(models.Model):
         compute="_compute_total_cutoff",
         string="Total Cut-off Amount",
         currency_field="company_currency_id",
-        readonly=True,
         tracking=True,
     )
     company_id = fields.Many2one(
         "res.company",
         string="Company",
         required=True,
-        readonly=True,
-        states={"draft": [("readonly", False)]},
+        states={"done": [("readonly", True)]},
         default=lambda self: self.env.company,
     )
     company_currency_id = fields.Many2one(
@@ -156,8 +158,7 @@ class AccountCutoff(models.Model):
         comodel_name="account.cutoff.line",
         inverse_name="parent_id",
         string="Cut-off Lines",
-        readonly=True,
-        states={"draft": [("readonly", False)]},
+        states={"done": [("readonly", True)]},
     )
     state = fields.Selection(
         selection=[("draft", "Draft"), ("done", "Done")],
@@ -178,6 +179,16 @@ class AccountCutoff(models.Model):
         )
     ]
 
+    def name_get(self):
+        res = []
+        type2label = self.cutoff_type_label_map
+        for rec in self:
+            name = type2label.get(rec.cutoff_type, "")
+            if rec.cutoff_date:
+                name = "%s %s" % (name, format_date(self.env, rec.cutoff_date))
+            res.append((rec.id, name))
+        return res
+
     def back2draft(self):
         self.ensure_one()
         if self.move_id:
@@ -192,13 +203,13 @@ class AccountCutoff(models.Model):
         same values for these fields will be merged.
         The list must at least contain account_id.
         """
-        return ["partner_id", "account_id", "analytic_account_id"]
+        return ["partner_id", "account_id", "analytic_distribution"]
 
     def _prepare_move(self, to_provision):
         self.ensure_one()
         movelines_to_create = []
         amount_total = 0
-        move_label = self.move_label
+        ref = self.move_ref
         merge_keys = self._get_merge_keys()
         for merge_values, amount in to_provision.items():
             amount = self.company_currency_id.round(amount)
@@ -207,7 +218,12 @@ class AccountCutoff(models.Model):
                 "credit": amount >= 0 and amount or 0,
             }
             for k, v in zip(merge_keys, merge_values):
-                vals[k] = v
+                value = v
+                if k == "analytic_distribution" and isinstance(v, str):
+                    value = json.loads(value)
+
+                vals[k] = value
+
             movelines_to_create.append((0, 0, vals))
             amount_total += amount
 
@@ -221,7 +237,6 @@ class AccountCutoff(models.Model):
                     "account_id": self.cutoff_account_id.id,
                     "debit": counterpart_amount < 0 and counterpart_amount * -1 or 0,
                     "credit": counterpart_amount >= 0 and counterpart_amount or 0,
-                    "analytic_account_id": False,
                 },
             )
         )
@@ -230,7 +245,7 @@ class AccountCutoff(models.Model):
             "company_id": self.company_id.id,
             "journal_id": self.cutoff_journal_id.id,
             "date": self.cutoff_date,
-            "ref": move_label,
+            "ref": ref,
             "line_ids": movelines_to_create,
         }
         return res
@@ -248,7 +263,7 @@ class AccountCutoff(models.Model):
         return {
             "partner_id": self.move_partner and partner_id or False,
             "account_id": cutoff_line.cutoff_account_id.id,
-            "analytic_account_id": cutoff_line.analytic_account_id.id,
+            "analytic_distribution": cutoff_line.analytic_distribution,
             "amount": cutoff_line.cutoff_amount,
         }
 
@@ -260,7 +275,7 @@ class AccountCutoff(models.Model):
         return {
             "partner_id": False,
             "account_id": cutoff_tax_line.cutoff_account_id.id,
-            "analytic_account_id": cutoff_tax_line.analytic_account_id.id,
+            "analytic_distribution": cutoff_tax_line.analytic_distribution,
             "amount": cutoff_tax_line.cutoff_amount,
         }
 
@@ -273,7 +288,12 @@ class AccountCutoff(models.Model):
         to_provision = defaultdict(float)
         merge_keys = self._get_merge_keys()
         for provision_line in provision_lines:
-            key = tuple(provision_line.get(key) for key in merge_keys)
+            key = tuple(
+                isinstance(provision_line.get(key), dict)
+                and json.dumps(provision_line.get(key))
+                or provision_line.get(key)
+                for key in merge_keys
+            )
             to_provision[key] += provision_line["amount"]
         return to_provision
 
@@ -302,6 +322,8 @@ class AccountCutoff(models.Model):
         to_provision = self._merge_provision_lines(provision_lines)
         vals = self._prepare_move(to_provision)
         move = move_obj.create(vals)
+        if self.company_id.post_cutoff_move:
+            move._post(soft=False)
         self.write({"move_id": move.id, "state": "done"})
         self.message_post(body=_("Journal entry generated"))
 
@@ -319,27 +341,27 @@ class AccountCutoff(models.Model):
     def get_lines(self):
         """This method is designed to be inherited in other modules"""
         self.ensure_one()
+        assert self.state != "done"
+        # I test self.state == 'draft' below because other modules
+        # (e.g. account_cutoff_start_end_dates) add additional states
+        # and don't require self.cutoff_date
+        if self.state == "draft" and not self.cutoff_date:
+            raise UserError(_("Cutoff date is not set."))
         # Delete existing lines
         self.line_ids.unlink()
         self.message_post(body=_("Cut-off lines re-generated"))
-        return True
 
     def unlink(self):
         for rec in self:
-            if rec.state != "draft":
+            if rec.state == "done":
                 raise UserError(
-                    _(
-                        "You cannot delete cutoff records that are not "
-                        "in draft state."
-                    )
+                    _("You cannot delete cutoff records that are in done state.")
                 )
         return super().unlink()
 
     def button_line_tree(self):
-        action = (
-            self.env.ref("account_cutoff_base.account_cutoff_line_action")
-            .sudo()
-            .read()[0]
+        action = self.env["ir.actions.actions"]._for_xml_id(
+            "account_cutoff_base.account_cutoff_line_action"
         )
         action.update(
             {
@@ -374,12 +396,16 @@ class AccountCutoff(models.Model):
             tax = ato.browse(tax_line["id"])
             if float_is_zero(tax_line["amount"], precision_rounding=cur_rprec):
                 continue
+
+            tax_accrual_account_id = False
+            tax_account_field_label = ""
             if self.cutoff_type == "accrued_expense":
                 tax_accrual_account_id = tax.account_accrued_expense_id.id
                 tax_account_field_label = _("Accrued Expense Tax Account")
             elif self.cutoff_type == "accrued_revenue":
                 tax_accrual_account_id = tax.account_accrued_revenue_id.id
                 tax_account_field_label = _("Accrued Revenue Tax Account")
+
             if not tax_accrual_account_id:
                 raise UserError(
                     _(
@@ -407,131 +433,3 @@ class AccountCutoff(models.Model):
                 )
             )
         return res
-
-
-class AccountCutoffLine(models.Model):
-    _name = "account.cutoff.line"
-    _description = "Account Cut-off Line"
-
-    parent_id = fields.Many2one("account.cutoff", string="Cut-off", ondelete="cascade")
-    name = fields.Char("Description")
-    company_currency_id = fields.Many2one(
-        related="parent_id.company_currency_id",
-        string="Company Currency",
-        readonly=True,
-    )
-    partner_id = fields.Many2one("res.partner", string="Partner", readonly=True)
-    quantity = fields.Float(digits="Product Unit of Measure", readonly=True)
-    price_unit = fields.Float(
-        string="Unit Price w/o Tax",
-        digits="Product Price",
-        readonly=True,
-        help="Price per unit (discount included) without taxes in the default "
-        "unit of measure of the product in the currency of the 'Currency' field.",
-    )
-    price_origin = fields.Char(readonly=True)
-    origin_move_line_id = fields.Many2one(
-        "account.move.line", string="Origin Journal Item", readonly=True
-    )  # Old name: move_line_id
-    origin_move_id = fields.Many2one(
-        related="origin_move_line_id.move_id", string="Origin Journal Entry"
-    )  # old name: move_id
-    origin_move_date = fields.Date(
-        related="origin_move_line_id.move_id.date", string="Origin Journal Entry Date"
-    )  # old name: move_date
-    account_id = fields.Many2one(
-        "account.account",
-        "Account",
-        required=True,
-        readonly=True,
-    )
-    cutoff_account_id = fields.Many2one(
-        "account.account",
-        string="Cut-off Account",
-        required=True,
-        readonly=True,
-    )
-    cutoff_account_code = fields.Char(
-        related="cutoff_account_id.code", string="Cut-off Account Code", readonly=True
-    )
-    analytic_account_id = fields.Many2one(
-        "account.analytic.account",
-        string="Analytic Account",
-        readonly=True,
-    )
-    currency_id = fields.Many2one(
-        "res.currency",
-        string="Amount Currency",
-        readonly=True,
-        help="Currency of the 'Amount' field.",
-    )
-    amount = fields.Monetary(
-        currency_field="currency_id",
-        readonly=True,
-        help="Amount that is used as base to compute the Cut-off Amount. "
-        "This Amount is in the 'Amount Currency', which may be different "
-        "from the 'Company Currency'.",
-    )
-    cutoff_amount = fields.Monetary(
-        string="Cut-off Amount",
-        currency_field="company_currency_id",
-        readonly=True,
-        help="Cut-off Amount without taxes in the Company Currency.",
-    )
-    tax_line_ids = fields.One2many(
-        "account.cutoff.tax.line",
-        "parent_id",
-        string="Cut-off Tax Lines",
-        readonly=True,
-    )
-    notes = fields.Text()
-
-
-class AccountCutoffTaxLine(models.Model):
-    _name = "account.cutoff.tax.line"
-    _description = "Account Cut-off Tax Line"
-
-    parent_id = fields.Many2one(
-        "account.cutoff.line",
-        string="Account Cut-off Line",
-        ondelete="cascade",
-        required=True,
-    )
-    tax_id = fields.Many2one("account.tax", string="Tax", required=True)
-    cutoff_account_id = fields.Many2one(
-        "account.account",
-        string="Cut-off Account",
-        required=True,
-        readonly=True,
-    )
-    analytic_account_id = fields.Many2one(
-        "account.analytic.account",
-        string="Analytic Account",
-        readonly=True,
-    )
-    base = fields.Monetary(
-        currency_field="currency_id",
-        readonly=True,
-        help="Base Amount in the currency of the PO.",
-    )
-    amount = fields.Monetary(
-        string="Tax Amount",
-        currency_field="currency_id",
-        readonly=True,
-        help="Tax Amount in the currency of the PO.",
-    )
-    sequence = fields.Integer(readonly=True)
-    cutoff_amount = fields.Monetary(
-        string="Cut-off Tax Amount",
-        currency_field="company_currency_id",
-        readonly=True,
-        help="Tax Cut-off Amount in the company currency.",
-    )
-    currency_id = fields.Many2one(
-        related="parent_id.currency_id", string="Currency", readonly=True
-    )
-    company_currency_id = fields.Many2one(
-        related="parent_id.company_currency_id",
-        string="Company Currency",
-        readonly=True,
-    )
