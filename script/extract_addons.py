@@ -49,6 +49,10 @@ ADDONS_TO_EXTRACT = {
         "connector_importer",
         "connector_importer_product",
     ),
+    "pos": (
+        "pos_lot_barcode",
+        "pos_lot_selection",
+    ),
     "purchase-workflow": (
         "purchase_tier_validation",
         "purchase_requisition_tier_validation",
