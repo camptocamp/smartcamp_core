@@ -73,6 +73,7 @@ ADDONS_TO_EXTRACT = {
     "mis-builder": (
         "mis_builder",
         "mis_builder_budget",
+        "mis_builder_demo",
     ),
     ("mis-builder-contrib"): (
         "mis_builder_total_committed_purchase",

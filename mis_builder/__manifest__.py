@@ -3,7 +3,7 @@
 
 {
     "name": "MIS Builder",
-    "version": "15.0.4.1.1",
+    "version": "16.0.5.0.1",
     "category": "Reporting",
     "summary": """
         Build 'Management Information System' Reports and Dashboards
@@ -29,14 +29,12 @@
     ],
     "assets": {
         "web.assets_backend": [
-            "mis_builder/static/src/css/custom.css",
-            "mis_builder/static/src/js/mis_report_widget.js",
+            "mis_builder/static/src/components/mis_report_widget.esm.js",
+            "mis_builder/static/src/components/mis_report_widget.xml",
+            "mis_builder/static/src/components/mis_report_widget.css",
         ],
         "web.report_assets_common": [
             "/mis_builder/static/src/css/report.css",
-        ],
-        "web.assets_qweb": [
-            "mis_builder/static/src/xml/mis_report_widget.xml",
         ],
     },
     "qweb": ["static/src/xml/mis_report_widget.xml"],
