@@ -1,7 +1,6 @@
 # Author: Simone Orsi
 # Copyright 2018 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
-
 from odoo import _, exceptions
 
 from odoo.addons.component.core import Component
@@ -64,9 +63,8 @@ class RecordImporter(Component):
     _record_handler_usage = "odoorecord.handler"
     _tracking_handler_usage = "tracking.handler"
     # a unique key (field name) to retrieve the odoo record
-    # if this key is an external/XML ID, set 'odoo_unique_key_is_xmlid' to True
+    # if this key is an external/XML ID, prefix the name with `xid::` (eg: xid::id)
     odoo_unique_key = ""
-    odoo_unique_key_is_xmlid = False
 
     def _init_importer(self, recordset):
         self.recordset = recordset
@@ -75,7 +73,6 @@ class RecordImporter(Component):
         self.record_handler._init_handler(
             importer=self,
             unique_key=self.unique_key,
-            unique_key_is_xmlid=self.unique_key_is_xmlid,
         )
         # tracking handler is responsible for logging and chunk reports
         self.tracker = self.component(usage=self._tracking_handler_usage)
@@ -84,6 +81,10 @@ class RecordImporter(Component):
             logger_name=LOGGER_NAME,
             log_prefix=self.recordset.import_type_id.key + " ",
         )
+        # TODO: trash on v16
+        # `odoo_unique_key_is_xmlid` has been deprecated from v15
+        if hasattr(self, "odoo_unique_key_is_xmlid"):
+            raise AttributeError("`odoo_unique_key_is_xmlid` is not supported anymore")
 
     @property
     def unique_key(self):
@@ -91,9 +92,7 @@ class RecordImporter(Component):
 
     @property
     def unique_key_is_xmlid(self):
-        return self.work.options.importer.get(
-            "odoo_unique_key_is_xmlid", self.odoo_unique_key_is_xmlid
-        )
+        return self.unique_key.startswith("xid::") or self.unique_key == "id"
 
     # Override to not rely on automatic mapper lookup.
     # This is especially needed if you register more than one importer
@@ -104,7 +103,6 @@ class RecordImporter(Component):
     # just an instance cache for the mapper
     _mapper = None
 
-    # TODO: add tests
     # TODO: do the same for record handler and tracking handler
     def _get_mapper(self):
         mapper_name = self.work.options.mapper.get("name", self._mapper_name)
@@ -164,7 +162,7 @@ class RecordImporter(Component):
     def make_translation_key(self, key, lang):
         sep = self.work.options.importer.get("translation_key_sep", ":")
         regional_lang = self.work.options.importer.get(
-            "translation_use_regional_lang", True
+            "translation_use_regional_lang", False
         )
         if not regional_lang:
             lang = lang[:2]  # eg: "de_DE" -> "de"
@@ -209,7 +207,7 @@ class RecordImporter(Component):
                 msg += ": {}={}".format(unique_key, values[unique_key])
             return {"message": msg}
         missing = not dest_key.startswith("__") and values.get(dest_key) is None
-        is_xmlid = dest_key == unique_key and self.odoo_unique_key_is_xmlid
+        is_xmlid = dest_key == unique_key and self.unique_key_is_xmlid
         if missing and not is_xmlid:
             msg = "MISSING REQUIRED DESTINATION KEY={}".format(dest_key)
             if unique_key and values.get(unique_key):
@@ -298,13 +296,20 @@ class RecordImporter(Component):
         return {"override_existing": self.must_override_existing}
 
     # TODO: make these contexts customizable via recordset settings
+    def _odoo_default_context(self):
+        """Default context to be used in both create and write methods"""
+        return {
+            "importer_type_id": self.recordset.import_type_id.id,
+            "tracking_disable": True,
+        }
+
     def _odoo_create_context(self):
         """Inject context variables on create, merged by odoorecord handler."""
-        return {"tracking_disable": True}
+        return self._odoo_default_context()
 
     def _odoo_write_context(self):
         """Inject context variables on write, merged by odoorecord handler."""
-        return {"tracking_disable": True}
+        return self._odoo_default_context()
 
     def run(self, record, is_last_importer=True, **kw):
         """Run record job.

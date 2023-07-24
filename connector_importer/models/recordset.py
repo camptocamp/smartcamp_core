@@ -9,6 +9,7 @@ from collections import OrderedDict
 from odoo import api, fields, models
 
 from odoo.addons.base_sparse_field.models.fields import Serialized
+from odoo.addons.component.utils import is_component_registry_ready
 from odoo.addons.queue_job.job import DONE, STATES
 
 from ..log import logger
@@ -107,7 +108,7 @@ class ImportRecordset(models.Model):
         # In order to streamline this I invalidate cache right away so the
         # values are converted right away
         # TL/DR integer dict keys will always be converted to strings, beware
-        self.invalidate_cache((fname,))
+        self.invalidate_recordset((fname,))
 
     def set_report(self, values, reset=False):
         """Update import report values."""
@@ -140,7 +141,7 @@ class ImportRecordset(models.Model):
             "shared_data": {},
         }
         self.write(values)
-        self.invalidate_cache(tuple(values.keys()))
+        self.invalidate_recordset(tuple(values.keys()))
 
     def _get_report_html_data(self):
         """Prepare data for HTML report.
@@ -178,13 +179,13 @@ class ImportRecordset(models.Model):
 
     @api.depends("report_data")
     def _compute_report_html(self):
-        template = self.env.ref("connector_importer.recordset_report")
+        qweb = self.env["ir.qweb"].sudo()
         for item in self:
             item.report_html = False
             if not item.report_data:
                 continue
             data = item._get_report_html_data()
-            item.report_html = template._render(data)
+            item.report_html = qweb._render("connector_importer.recordset_report", data)
 
     def _compute_full_report_url(self):
         for item in self:
@@ -279,7 +280,11 @@ class ImportRecordset(models.Model):
 
     @api.depends("import_type_id")
     def _compute_docs_html(self):
-        template = self.env.ref("connector_importer.recordset_docs")
+        if not is_component_registry_ready(self.env.cr.dbname):
+            # We cannot render anything if we cannot load components
+            self.docs_html = False
+            return
+        qweb = self.env["ir.qweb"].sudo()
         for item in self:
             item.docs_html = False
             if isinstance(item.id, models.NewId) or not item.backend_id:
@@ -289,7 +294,7 @@ class ImportRecordset(models.Model):
                 continue
             importers = item._get_importers()
             data = {"recordset": item, "importers": importers}
-            item.docs_html = template._render(data)
+            item.docs_html = qweb._render("connector_importer.recordset_docs", data)
 
 
 # TODO

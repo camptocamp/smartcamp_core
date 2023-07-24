@@ -3,7 +3,8 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
 
-import mock
+from unittest import mock
+
 from odoo_test_helper import FakeModelLoader
 
 from .common import BaseTestCase
@@ -67,6 +68,10 @@ class TestSource(BaseTestCase):
         )
         self.assertIn("chunk_size", data["fields_info"])
         self.assertIn("fake_param", data["fields_info"])
+
+    def test_config_summary(self):
+        html = self.source.config_summary
+        self.assertEqual(html.__class__.__name__, "Markup")
 
     @mock.patch(SOURCE_MODEL + "._selection_source_ref_id")
     def test_consumer_basic(self, _selection_source_ref_id):

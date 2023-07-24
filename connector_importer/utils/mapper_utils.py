@@ -10,6 +10,7 @@ from odoo import fields
 from odoo.tools.misc import str2bool
 
 from ..log import logger
+from ..utils.misc import sanitize_external_id
 
 FMTS = ("%d/%m/%Y",)
 
@@ -36,12 +37,12 @@ def to_date(value, formats=FMTS):
     return None
 
 
-def to_utc_datetime(orig_value, tz="Europe/Rome"):
+def to_utc_datetime(orig_value, tz="Europe/Rome", formats=FMTS_DT):
     """Convert date strings to odoo format respecting TZ."""
     # pylint: disable=except-pass
     value = orig_value
-    local_tz = pytz.timezone("Europe/Rome")
-    for fmt in FMTS_DT:
+    local_tz = pytz.timezone(tz)
+    for fmt in formats:
         try:
             naive = datetime.strptime(orig_value, fmt)
             local_dt = local_tz.localize(naive, is_dst=None)
@@ -97,7 +98,6 @@ def convert(field, conv_type, fallback_field=None, pre_value_handler=None, **kw)
     Use ``fallback_field`` to provide a field of the same type
     to be used in case the base field has no value.
     """
-    convert._from_key = field
 
     if conv_type in CONV_MAPPING:
         conv_type = CONV_MAPPING[conv_type]
@@ -117,23 +117,23 @@ def convert(field, conv_type, fallback_field=None, pre_value_handler=None, **kw)
             return None
         return conv_type(value, **kw)
 
+    modifier._from_key = field
     return modifier
 
 
 def from_mapping(field, mapping, default_value=None):
     """Convert the source value using a ``mapping`` of values."""
-    from_mapping._from_key = field
 
     def modifier(self, record, to_attr):
         value = record.get(field)
         return mapping.get(value, default_value)
 
+    modifier._from_key = field
     return modifier
 
 
 def concat(field, separator=" ", handler=None):
     """Concatenate values from different fields."""
-    concat._from_key = field
 
     # TODO: `field` is actually a list of fields.
     # `field` attribute is required ATM by the base connector mapper and
@@ -146,32 +146,46 @@ def concat(field, separator=" ", handler=None):
         ]
         return separator.join(value)
 
+    modifier._from_key = field
     return modifier
 
 
-def xmlid_to_rel(field):
+def xmlid_to_rel(field, sanitize=True, sanitize_default_mod_name=None):
     """Convert xmlids source values to ids."""
-    xmlid_to_rel._from_key = field
+    xmlid_to_rel._sanitize = sanitize
+    xmlid_to_rel._sanitize_default_mod_name = sanitize_default_mod_name
+
+    def _xid_to_record(env, xid):
+        xid = (
+            sanitize_external_id(
+                xid, default_mod_name=xmlid_to_rel._sanitize_default_mod_name
+            )
+            if xmlid_to_rel._sanitize
+            else xid
+        )
+        return env.ref(xid, raise_if_not_found=False)
 
     def modifier(self, record, to_attr):
-        column = self.model._fields[to_attr]
         value = record.get(field)
         if value is None:
             return None
-        if column.type.endswith("2many"):
+        if isinstance(value, str) and "," in value:
             value = [x.strip() for x in value.split(",") if x.strip()]
-            return [
-                (6, 0, self.env.ref(x).ids)
-                for x in value
-                if self.env.ref(x, raise_if_not_found=False)
-            ]
-        else:
+        if isinstance(value, str):
             # m2o
-            rec = self.env.ref(value, raise_if_not_found=False)
+            rec = _xid_to_record(self.env, value)
             if rec:
                 return rec.id
             return None
+        # x2m
+        values = []
+        for xid in value:
+            rec = _xid_to_record(self.env, xid)
+            if rec:
+                values.append((6, 0, rec.ids))
+        return values
 
+    modifier._from_key = field
     return modifier
 
 
@@ -217,7 +231,6 @@ def backend_to_rel(  # noqa: C901
     :param create_missing_handler: provide an handler
         for getting new values for a new record to be created.
     """
-    backend_to_rel._from_key = field
 
     def modifier(self, record, to_attr):
         search_value = record.get(field)
@@ -321,5 +334,5 @@ def backend_to_rel(  # noqa: C901
     # Trick tnx to http://stackoverflow.com/a/27910553/647924
     modifier.search_field = search_field or "name"
     modifier.search_operator = search_operator or None
-
+    modifier._from_key = field
     return modifier
