@@ -8,12 +8,8 @@ import argparse
 
 ODOO_SERIE = "16.0"
 ADDONS_TO_EXTRACT = {
-    # repo: (addon1, addon2, ...)
-    "bank-statement-import": (
-        "account_bank_statement_import_transfer_move",
-    ),
     "account-closing": (
-        "account_cutoff_picking", # ex account_cutoff_accrual_picking
+        "account_cutoff_picking",
         "account_cutoff_base",
         "account_invoice_start_end_dates",
         "account_cutoff_start_end_dates",
@@ -25,11 +21,11 @@ ADDONS_TO_EXTRACT = {
         "account_invoice_report_grouped_by_picking",
     ),
     "bank-statement-import": (
-        "account_statement_import",
+        "account_statement_import_base",
         "account_statement_import_camt",
         "account_statement_import_camt54",
-        # still not migrated to v14 and to be account_statement_import_transfer_move
-        # "account_bank_statement_import_transfer_move",
+        "account_statement_import_file",
+        "account_statement_import_ofx",
     ),
     "reporting-engine": (
         "bi_sql_editor",
@@ -43,10 +39,13 @@ ADDONS_TO_EXTRACT = {
         "component_event",
     ),
     # repo name, org, branch
-    # TODO @simahawk: this work has been done in urgency and must be cleaned up 
+    # TODO @simahawk: this work has been done in urgency and must be cleaned up
     # and proper PRs opened once validated on odoo.sh.
-    ("connector-interfaces", "camptocamp", "15-mig-connector_importer_product"): (
-        "connector_importer",
+    # ("connector-interfaces", "camptocamp", "16-connector_importer"): (
+    #     "connector_importer",
+    # ),
+    # Previous work included in the following
+    ("connector-interfaces", "camptocamp", "16-connector_importer_product--noinstall"): (
         "connector_importer_product",
     ),
     "pos": (
@@ -60,12 +59,9 @@ ADDONS_TO_EXTRACT = {
     ),
     "server-ux": (
         "date_range",
-        "mass_editing",
+        "server_action_mass_edit",
         "base_tier_validation",
         "base_tier_validation_formula",
-    ),
-    "social": (
-        "mail_outbound_static",
     ),
     "stock-logistics-workflow": (
         "stock_picking_invoice_link",
@@ -75,17 +71,24 @@ ADDONS_TO_EXTRACT = {
         "mis_builder_budget",
         "mis_builder_demo",
     ),
-    ("mis-builder-contrib"): (
+    ("mis-builder-contrib", "dzungtran89", "16.0-mis_builder_budget_product"): (
+        "mis_builder_budget_product",
+    ),
+    "mis-builder-contrib": (
         "mis_builder_total_committed_purchase",
     ),
     "queue": (
         "queue_job",
         "queue_job_cron_jobrunner",
     ),
+    ("smartcamp_core_private", "camptocamp", "16.0"): (
+        "payment_provider_wallee",
+    ),
     "web": (
         "web_advanced_search",
     ),
 }
+
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -137,6 +140,7 @@ def fetch_addons(odoo_serie, addons_to_extract, destination_path):
             "The following addons were not found: ",
             ", ".join(addons_control)
         )
+
 
 def main(serie, addons_to_extract):
     parser = get_parser()

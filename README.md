@@ -15,7 +15,6 @@ Update script extract_addons.py and change:
 
  * ODOO_SERIE
  * ADDONS_TO_EXTRACT
- * OCA_PROJECTS
 
 and then run:
 

@@ -88,13 +88,17 @@ class ImportRecord(models.Model):
     def run_import(self):
         """Queue a job for importing data stored in to self"""
         self.ensure_one()
-        use_job = self.recordset_id.import_type_id.use_job
-        # TODO: use ctx key to disable job instead
-        job_method = self.with_delay().import_record
-        if self.debug_mode():
+        debug_mode = self.debug_mode()
+        if debug_mode:
             logger.warning("### DEBUG MODE ACTIVE: WILL NOT USE QUEUE ###")
-        if self.debug_mode() or not use_job:
-            job_method = self.import_record
+        use_job = self.recordset_id.import_type_id.use_job
+        if debug_mode:
+            use_job = False
+        job_method = (
+            self.with_context(queue_job__no_delay=not use_job)
+            .with_delay()
+            .import_record
+        )
         result = self._run_import(job_method, use_job)
         return result
 

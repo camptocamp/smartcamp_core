@@ -237,27 +237,8 @@ class AbstractReportXslx(models.AbstractModel):
         for col_pos, column in report_data["columns"].items():
             value = line_dict.get(column["field"], False)
             cell_type = column.get("type", "string")
-            # We will use a special cell type according to the currency of
-            # record and the company's currency:
-            # - If the currency is the same as the company's currency, we will leave
-            # the value empty.
-            # - If the currency is different from the company's currency, we will
-            # show the value.
-            if cell_type == "amount_different_company_currency":
-                if line_dict.get("currency_id") and line_dict.get(
-                    "company_currency_id"
-                ):
-                    if line_dict["currency_id"] == line_dict["company_currency_id"]:
-                        value = ""
-                        cell_type = "string"
-                    else:
-                        cell_type = "amount_currency"
-            # All conditions according to cell type.
             if cell_type == "string":
-                if (
-                    line_dict.get("account_group_id", False)
-                    and line_dict["account_group_id"]
-                ):
+                if line_dict.get("type", "") == "group_type":
                     report_data["sheet"].write_string(
                         report_data["row_pos"],
                         col_pos,
@@ -550,7 +531,10 @@ class AbstractReportXslx(models.AbstractModel):
             format_amt = report_data["formats"]["format_amount"]
             field_prefix = "format_amount"
         if "currency_id" in line_object and line_object.get("currency_id", False):
-            currency = line_object["currency_id"]
+            if isinstance(line_object["currency_id"], int):
+                currency = self.env["res.currency"].browse(line_object["currency_id"])
+            else:
+                currency = line_object["currency_id"]
             field_name = "{}_{}".format(field_prefix, currency.name)
             if hasattr(self, field_name):
                 format_amt = getattr(self, field_name)

@@ -305,7 +305,7 @@ class MisReportInstancePeriod(models.Model):
     def _compute_source_aml_model_id(self):
         for record in self:
             if record.source == SRC_ACTUALS:
-                if not self.report_instance_id.report_id:
+                if not record.report_instance_id.report_id:
                     raise UserError(
                         _(
                             "Please select a report template and/or "
@@ -314,7 +314,7 @@ class MisReportInstancePeriod(models.Model):
                     )
                 # use the default model defined on the report template
                 record.source_aml_model_id = (
-                    self.report_instance_id.report_id.move_lines_source
+                    record.report_instance_id.report_id.move_lines_source
                 )
             elif record.source in (SRC_SUMCOL, SRC_CMPCOL):
                 record.source_aml_model_id = False
@@ -465,7 +465,9 @@ class MisReportInstance(models.Model):
     @api.depends("date")
     def _compute_pivot_date(self):
         for record in self:
-            if record.date:
+            if self.env.context.get("mis_pivot_date"):
+                record.pivot_date = self.env.context.get("mis_pivot_date")
+            elif record.date:
                 record.pivot_date = record.date
             else:
                 record.pivot_date = fields.Date.context_today(record)
@@ -562,6 +564,11 @@ class MisReportInstance(models.Model):
         default=False,
         string="Show settings button",
         help="Show the settings button in the report widget.",
+    )
+    widget_show_pivot_date = fields.Boolean(
+        default=False,
+        string="Show Pivot Date",
+        help="Show the Pivot Date in the report widget filter bar.",
     )
     widget_search_view_id = fields.Many2one(
         comodel_name="ir.ui.view",

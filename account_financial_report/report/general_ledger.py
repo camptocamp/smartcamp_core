@@ -312,7 +312,7 @@ class GeneralLedgerReport(models.AbstractModel):
         move_line_data = {
             "id": move_line["id"],
             "date": move_line["date"],
-            "entry": move_line["move_id"][1],
+            "entry": move_line["move_name"],
             "entry_id": move_line["move_id"][0],
             "journal_id": move_line["journal_id"][0],
             "account_id": move_line["account_id"][0],
@@ -460,7 +460,7 @@ class GeneralLedgerReport(models.AbstractModel):
             domain += extra_domain
         ml_fields = self._get_ml_fields()
         move_lines = self.env["account.move.line"].search_read(
-            domain=domain, fields=ml_fields
+            domain=domain, fields=ml_fields, order="date,move_name"
         )
         journal_ids = set()
         full_reconcile_ids = set()
@@ -873,4 +873,5 @@ class GeneralLedgerReport(models.AbstractModel):
             "amount_currency",
             "balance",
             "tax_ids",
+            "move_name",
         ]
