@@ -63,6 +63,9 @@ ADDONS_TO_EXTRACT = {
         "base_tier_validation",
         "base_tier_validation_formula",
     ),
+    "stock-logistics-reporting":(
+        "stock_picking_report_valued"
+    ),
     "stock-logistics-workflow": (
         "stock_picking_invoice_link",
     ),
