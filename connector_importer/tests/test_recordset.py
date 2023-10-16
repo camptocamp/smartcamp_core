@@ -30,7 +30,8 @@ class TestRecordset(common.TransactionCase):
                 "key": "ok",
                 "options": """
 - model: res.partner
-  importer: partner.importer
+  importer:
+    name: partner.importer
             """,
             }
         )
@@ -93,6 +94,22 @@ class TestRecordset(common.TransactionCase):
         self.assertEqual(key.model, "res.partner")
         self.assertTrue(isinstance(self.recordset.report_html, Markup))
 
-    def test_docs_html(self):
-        # No registry loaded here, nothing to render
-        self.assertFalse(self.recordset.docs_html)
+    def test_importable_models(self):
+        self.itype.write(
+            {
+                "options": """
+- model: res.partner
+  importer:
+    name: partner.importer
+- model: res.partner.category
+- model: res.lang
+        """
+            }
+        )
+        expected = ("res.partner", "res.lang", "res.partner.category")
+        models = self.recordset.importable_model_ids.mapped("model")
+        for model in expected:
+            self.assertIn(model, models)
+        models = self.recordset.server_action_importable_model_ids.mapped("model")
+        for model in expected + ("import.recordset",):
+            self.assertIn(model, models)

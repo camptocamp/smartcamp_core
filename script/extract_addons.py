@@ -39,13 +39,9 @@ ADDONS_TO_EXTRACT = {
         "component_event",
     ),
     # repo name, org, branch
-    # TODO @simahawk: this work has been done in urgency and must be cleaned up
-    # and proper PRs opened once validated on odoo.sh.
-    # ("connector-interfaces", "camptocamp", "16-connector_importer"): (
-    #     "connector_importer",
-    # ),
-    # Previous work included in the following
-    ("connector-interfaces", "camptocamp", "16-connector_importer_product--noinstall"): (
+    # TODO: pending PR https://github.com/OCA/connector-interfaces/pull/129
+    ("connector-interfaces", "camptocamp", "16-connector_importer_product"): (
+        "connector_importer",
         "connector_importer_product",
     ),
     "pos": (
