@@ -68,11 +68,16 @@
                     </div>
                     <notebook>
                         <page string="Recordsets">
-                            <field name="recordset_ids" nolabel="1">
+                            <field
+                                name="recordset_ids"
+                                nolabel="1"
+                                context="{'default_backend_id': active_id}"
+                            >
                                 <tree>
                                     <field name="sequence" widget="handle" />
                                     <field name="name" readonly="1" />
                                     <field name="create_date" readonly="1" />
+                                    <field name="last_run_on" readonly="1" />
                                     <field name="import_type_id" />
                                     <field
                                         name="override_existing"
@@ -85,6 +90,14 @@
                                         type="object"
                                         class="oe_highlight"
                                         string="Import"
+                                    />
+                                    <field name="source_model" invisible="1" />
+                                    <button
+                                        name="open_source_config"
+                                        type="object"
+                                        class="oe_highlight btn-sm"
+                                        string="Source"
+                                        attrs="{'invisible': [('source_model', '=', False)]}"
                                     />
                                 </tree>
                             </field>
