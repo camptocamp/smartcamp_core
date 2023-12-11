@@ -9,12 +9,12 @@ import argparse
 
 ODOO_SERIE = "17.0"
 ADDONS_TO_EXTRACT = {
-    # "account-closing": (
-    #     "account_cutoff_picking",
-    #     "account_cutoff_base",
-    #     "account_invoice_start_end_dates",
-    #     "account_cutoff_start_end_dates",
-    # ),
+     "account-closing": (
+         "account_cutoff_picking",
+         "account_cutoff_base",
+         "account_invoice_start_end_dates",
+         "account_cutoff_start_end_dates",
+    ),
     # "account-financial-reporting": (
     #     "account_financial_report",
     # ),
@@ -28,17 +28,17 @@ ADDONS_TO_EXTRACT = {
     #     "account_statement_import_file",
     #     "account_statement_import_ofx",
     # ),
-    # "reporting-engine": (
+    "reporting-engine": (
     #     "bi_sql_editor",
     #     "report_wkhtmltopdf_param",
-    #     "report_xlsx",
+         "report_xlsx",
     #     "sql_request_abstract",
-    # ),
-    # "connector": (
-    #     "connector",
-    #     "component",
-    #     "component_event",
-    # ),
+    ),
+    "connector": (
+    #    "connector",
+        "component",
+        "component_event",
+    ),
     # # repo name, org, branch
     # # TODO: pending PR https://github.com/OCA/connector-interfaces/pull/129
     # ("connector-interfaces", "camptocamp", "16-connector_importer_product"): (
@@ -66,9 +66,9 @@ ADDONS_TO_EXTRACT = {
     # "stock-logistics-reporting":(
     #     "stock_picking_report_valued"
     # ),
-    # "stock-logistics-workflow": (
-    #     "stock_picking_invoice_link",
-    # ),
+    "stock-logistics-workflow": (
+        "stock_picking_invoice_link",
+    ),
     # "mis-builder": (
     #     "mis_builder",
     #     "mis_builder_budget",
@@ -80,10 +80,10 @@ ADDONS_TO_EXTRACT = {
     # "mis-builder-contrib": (
     #     "mis_builder_total_committed_purchase",
     # ),
-    # "queue": (
-    #     "queue_job",
+    "queue": (
+        "queue_job",
     #     "queue_job_cron_jobrunner",
-    # ),
+    ),
     # ("smartcamp_core_private", "camptocamp", "16.0"): (
     #     "payment_provider_wallee",
     # ),
