@@ -53,6 +53,9 @@ ADDONS_TO_EXTRACT = {
         "purchase_requisition_tier_validation",
         "purchase_advance_payment",
     ),
+    "server-tools": (
+        "base_view_inheritance_extension",
+    ),
     "server-ux": (
         "date_range",
         "server_action_mass_edit",
