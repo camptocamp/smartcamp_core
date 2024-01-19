@@ -53,6 +53,9 @@ ADDONS_TO_EXTRACT = {
         "purchase_requisition_tier_validation",
         "purchase_advance_payment",
     ),
+    "server-tools": (
+        "base_view_inheritance_extension",
+    ),
     "server-ux": (
         "date_range",
         "server_action_mass_edit",
@@ -85,6 +88,19 @@ ADDONS_TO_EXTRACT = {
     ),
     "web": (
         "web_advanced_search",
+    ),
+# For ebilling
+    "account-invoicing": (
+        "account_invoice_transmit_method",
+    ),
+    ("edi", "camptocamp", "16.0-mig-base_ebill_payment_contract"): (
+        "base_ebill_payment_contract",
+    ),
+    ("edi", "camptocamp", "16.0-mig-account_invoice_export"): (
+        "account_invoice_export",
+    ),
+    ("l10n-switzerland", "camptocamp", "16.0-mig-ebill_postfinance"): (
+        "ebill_postfinance",
     ),
 }
 
